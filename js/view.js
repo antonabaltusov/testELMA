@@ -1,20 +1,3 @@
-//   {id:"c2af31a1-4eca-4433-814f-5c6e32eab150",
-//   subject:"Анализ",
-//   "description":"",
-//   "creationAuthor":1,
-//   "executor":1,
-//   "creationDate":"2022-04-25",
-//   "planStartDate":"2022-04-25",
-//   "planEndDate":"2022-04-27",
-//   "endDate":"2022-04-25",
-//   "status":1,
-//   "order":1}
-
-//   {"id":1,
-//   "username":"user1",
-//   "surname":"Смагин",
-//   "firstName":"Иван",
-//   "secondName":""}
 export class View {
   constructor() {
     this.container = this.getElement(".container");
@@ -64,7 +47,7 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
     this.firstDay.setHours(0, 1, 0, 0);
   }
   displayError = (err) => {
-    let errors = this.getElement(".error");
+    const errors = this.getElement(".error");
     const p = this.createElement("p");
     p.textContent = err;
     if (!errors) {
@@ -102,21 +85,21 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
   };
 
   displayTable = (tasks, users) => {
-    let t = this.getElement(".table");
+    const t = this.getElement(".table");
     if (t) {
       t.remove();
     }
     const table = this.createElement("div", "table");
     table.style.gridTemplateColumns = `repeat(${this.countTd + 1}, 1fr)`;
-    table.style.gridTemplateRows = `auto repeat(${users.length}, 100px)`;
+    table.style.gridTemplateRows = `auto repeat(${users.length}, minmax(100px, 1fr))`;
 
     //row of dates
-    let dateArray = [];
+    const dateArray = [];
     for (let i = 0; i <= this.countTd; i++) {
       if (i === 0) {
         table.append(this.createElement("div", "author-column"));
       } else {
-        let date = new Date(this.firstDay);
+        const date = new Date(this.firstDay);
         date.setDate(date.getDate() + i - 1);
         dateArray.push(
           date
@@ -127,24 +110,24 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
             })
             .replace(/[/]/g, "-")
         );
-        date = date
+        const _date = date
           .toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" })
           .split("/");
-        let th = this.createElement("p", "date-cell");
-        th.textContent = `${date[0]}.${date[1]}`;
+        const th = this.createElement("p", "date-cell");
+        th.textContent = `${_date[0]}.${_date[1]}`;
         table.append(th);
       }
     }
     //row of tasks
     users.forEach((user) => {
-      let td = this.createElement("div", ["td", "td-author"]);
+      const td = this.createElement("div", ["td", "td-author"]);
       td.id = `cell-${user.id}`;
-      let p = this.createElement("p", "author");
+      const p = this.createElement("p", "author");
       p.textContent = user.firstName;
       td.append(p);
       table.append(td);
       for (let i = 0; i < this.countTd; i++) {
-        let td = this.createElement("div", ["td", "td-task"]);
+        const td = this.createElement("div", ["td", "td-task"]);
 
         td.id = `cell-${user.id}-${dateArray[i]}`;
         table.append(td);
@@ -180,7 +163,7 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
     }
   };
   setTask = (task, firstName) => {
-    let cell = this.getElement(
+    const cell = this.getElement(
       `#cell-${task.executor}-${new Date(task.planStartDate)
         .toLocaleDateString("en-GB", {
           year: "numeric",
@@ -190,15 +173,15 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
         .replace(/[/]/g, "-")}`
     );
     if (cell) {
-      let taskElement = this.createElement("div", "task");
-      let p = this.createElement("p", "task-name");
+      const taskElement = this.createElement("div", "task");
+      const p = this.createElement("p", "task-name");
       p.textContent = task.subject;
       const description = this.createElement("div", "task-about");
       for (let [key, value] of Object.entries(task)) {
-        if (key == "id") {
+        if (key === "id") {
           continue;
         }
-        if (key == "executor") {
+        if (key === "executor") {
           continue;
         }
         const p = this.createElement("p", "task-about__item");
@@ -215,7 +198,7 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
   setTasks = (tasks, users) => {
     tasks.forEach((task) => {
       const firstName = users.find(
-        (users) => users.id == task.creationAuthor
+        (user) => user.id == task.creationAuthor
       ).firstName;
       this.setTask(task, firstName);
     });
@@ -311,8 +294,8 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
       });
     }
   };
-  displayDropTask = (task) => {
+  displayDropTask = ({ task, firstName }) => {
     this.getElement(`#id${task.id}`).remove();
-    this.setTask(task);
+    this.setTask(task, firstName);
   };
 }

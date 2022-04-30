@@ -21,7 +21,7 @@ export class Controller {
   };
 
   bindDropTask = (taskId, authorId, date) => {
-    this.view.displayDropTask(this.model.DropTask(taskId, authorId, date));
+    this.view.displayDropTask(this.model.dropTask(taskId, authorId, date));
   };
 
   bindChangeDate = (firstDay, countTd) => {
