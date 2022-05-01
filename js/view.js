@@ -1,7 +1,8 @@
 export class View {
   constructor() {
     this.container = this.getElement(".container");
-    if (this.container.offsetWidth > 500) {
+    const body = this.getElement("body");
+    if (body.offsetWidth > 500) {
       this.backlog = this.createElement("div", "backlog");
       this.backlog.innerHTML = `
       <p class="backlog-name">Backlog</p>
@@ -9,7 +10,7 @@ export class View {
       <input type="text" class="search-input" placeholder="поиск">
       <button class="search-button">
       <svg class="search-svg" version="1.0" xmlns="http://www.w3.org/2000/svg"
- width="7pt" height="7pt" viewBox="0 0 1280.000000 1276.000000"
+ width="8px" height="8px" viewBox="0 0 1280.000000 1276.000000"
  preserveAspectRatio="xMidYMid meet">
 <metadata>
 Created by potrace 1.15, written by Peter Selinger 2001-2017
@@ -85,22 +86,28 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
   };
 
   displayTable = (tasks, users) => {
+    console.log(this.countTd);
     const t = this.getElement(".table");
     if (t) {
       t.remove();
     }
     const table = this.createElement("div", "table");
     table.style.gridTemplateColumns = `repeat(${this.countTd + 1}, 1fr)`;
-    table.style.gridTemplateRows = `auto repeat(${users.length}, minmax(100px, 1fr))`;
-
+    if (this.container.offsetWidth >= 768) {
+      table.style.gridTemplateRows = `auto repeat(${users.length}, minmax(100px, 1fr))`;
+    }
     //row of dates
     const dateArray = [];
+    let today = -1;
     for (let i = 0; i <= this.countTd; i++) {
       if (i === 0) {
         table.append(this.createElement("div", "author-column"));
       } else {
         const date = new Date(this.firstDay);
         date.setDate(date.getDate() + i - 1);
+        if (date.getDate() == new Date().getDate()) {
+          today = i - 1;
+        }
         dateArray.push(
           date
             .toLocaleDateString("en-GB", {
@@ -113,30 +120,41 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
         const _date = date
           .toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" })
           .split("/");
-        const th = this.createElement("p", "date-cell");
-        th.textContent = `${_date[0]}.${_date[1]}`;
-        table.append(th);
+        const td = this.createElement(
+          "div",
+          i - 1 == today ? ["date-cell", "today"] : "date-cell"
+        );
+        td.textContent = `${_date[0]}.${_date[1]}`;
+        table.append(td);
       }
     }
+    console.log(this.countTd);
     //row of tasks
     users.forEach((user) => {
       const td = this.createElement("div", ["td", "td-author"]);
       td.id = `cell-${user.id}`;
       const p = this.createElement("p", "author");
+      const div = this.createElement("div", "task");
       p.textContent = user.firstName;
-      td.append(p);
+      div.append(p);
+      td.append(div);
       table.append(td);
       for (let i = 0; i < this.countTd; i++) {
-        const td = this.createElement("div", ["td", "td-task"]);
-
+        const td = this.createElement(
+          "div",
+          i == today ? ["td", "td-task", "today"] : ["td", "td-task"]
+        );
         td.id = `cell-${user.id}-${dateArray[i]}`;
+        console.log(i);
         table.append(td);
       }
     });
+
     this.diagram.append(table);
     this.addListenerOnDrag();
     this.setTasks(tasks, users);
   };
+
   displayBacklog = (tasks) => {
     if (this.backlog) {
       this.backlogList = this.getElement(".backlog-list");
@@ -205,8 +223,8 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
   };
 
   addListenerOnDrag = () => {
-    const table = this.getElement(".table");
     if (this.backlog) {
+      const table = this.getElement(".table");
       this.getElement(".backlog-list").addEventListener(
         "dragstart",
         (event) => {
@@ -217,30 +235,12 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
       table.addEventListener("dragenter", (event) => {
         if (event.target.classList.contains("td-task")) {
           event.target.classList.add("hover");
-          console.log("enter", event.target);
         }
-        // else if (
-        //   event.target.classList.contains("task-name") ||
-        //   event.target.classList.contains("author") ||
-        //   event.target.classList.contains("task")
-        // ) {
-        //   const td = event.path.find((el) => el.classList.contains("td"));
-        //   console.log("enter", event.target);
-        //   td.classList.add("hover");
-        // }
       });
       table.addEventListener("dragleave", (event) => {
         if (event.target.classList.contains("td-task")) {
           event.target.classList.remove("hover");
-          console.log("leave", event.target);
         }
-        // else if (
-        //   event.target.classList.contains("author") ||
-        //   event.target.classList.contains("task")
-        // ) {
-        //   console.log("leave", event.target);
-        //   event.path[2].classList.remove("hover");
-        // }
       });
       table.addEventListener("dragover", (event) => {
         event.preventDefault();
@@ -279,10 +279,11 @@ Created by potrace 1.15, written by Peter Selinger 2001-2017
           event.target.classList.contains("author") ||
           event.target.classList.contains("task")
         ) {
-          element = event.path.find((el) => el.classList.contains("td"));
+          const parents =
+            event.path || (event.composedPath && event.composedPath());
+          element = parents.find((el) => el.classList.contains("td"));
         }
         if (element && element.childNodes.length < 6) {
-          console.log(element.childNodes.length);
           element.classList.remove("hover");
           let data = element.id.split("-");
           handler(
