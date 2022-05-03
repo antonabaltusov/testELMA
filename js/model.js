@@ -8,46 +8,20 @@ export class Model {
     this.tasksUrl =
       "https://varankin_dev.elma365.ru/api/extensions/2a38760e-083a-4dd0-aebc-78b570bfd3c7/script/tasks";
   }
-  getTasksAndUsers = (firstDay, countDays, callback, err) => {
-    this.getDataFromApi(
-      "tasks",
-      (tasks) => {
-        this.sortTasks(tasks);
-        if (this.users.length) {
-          callback({
-            tasks: this.sortTasksByDate(firstDay, countDays),
-            backlog: this.backlog,
-            users: this.users,
-          });
-        }
-      },
-      err
-    );
-    this.getDataFromApi(
-      "users",
-      (users) => {
-        this.users = users;
-        if (this.tasks.length) {
-          callback({
-            tasks: this.sortTasksByDate(firstDay, countDays),
-            backlog: this.backlog,
-            users: this.users,
-          });
-        }
-      },
-      err
-    );
-  };
-
-  getDataFromApi = (typeData, callback, err) => {
-    fetch(typeData == "users" ? this.usersUrl : this.tasksUrl)
+  getTasksFromApi = (firstDay, countDays, callback, err) => {
+    this.getDataFromApi("tasks")
       .then((response) => {
         if (response.ok) {
-          response.json().then((json) => {
-            callback(json);
+          response.json().then((tasks) => {
+            this.sortTasks(tasks);
+            if (this.users.length) {
+              callback({
+                tasks: this.sortTasksByDate(firstDay, countDays),
+                backlog: this.backlog,
+                users: this.users,
+              });
+            }
           });
-        } else {
-          alert("Ошибка HTTP: " + response.status);
         }
       })
       .catch((reason) =>
@@ -56,9 +30,39 @@ export class Model {
         )
       );
   };
+  getUsersFromApi = (callback, err) => {
+    this.getDataFromApi("users")
+      .then((response) => {
+        if (response.ok) {
+          response.json().then((users) => {
+            this.users = users;
+            if (this.tasks.length) {
+              callback({
+                tasks: this.sortTasksByDate(firstDay, countDays),
+                backlog: this.backlog,
+                users: this.users,
+              });
+            }
+          });
+        }
+      })
+      .catch((reason) =>
+        err(
+          reason + ` by ${typeData == "users" ? this.usersUrl : this.tasksUrl}`
+        )
+      );
+  };
+  getTasksAndUsers = (firstDay, countDays, callback, err) => {
+    this.getTasksFromApi(firstDay, countDays, callback, err);
+    this.getUsersFromApi(callback, err);
+  };
+
+  getDataFromApi = (typeData) => {
+    return fetch(typeData == "users" ? this.usersUrl : this.tasksUrl);
+  };
 
   getTasks = (firstDay, countTd, handle) => {
-    let tasks = this.sortTasksByDate(firstDay, countTd);
+    const tasks = this.sortTasksByDate(firstDay, countTd);
     handle(tasks, this.users);
   };
 

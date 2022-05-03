@@ -2,7 +2,6 @@ export class Controller {
   constructor(model, view) {
     this.model = model;
     this.view = view;
-
     this.render();
     this.view.bindDropTask(this.bindDropTask);
     this.view.bindChangeDate(this.bindChangeDate);
